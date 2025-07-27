@@ -3,7 +3,7 @@ kind: Service
 metadata:
   name: backend-service
   namespace: argocd
-  label:
+  labels:
     app: backend
 spec:
   selector:
@@ -12,5 +12,5 @@ spec:
   ports:
     - protocol: TCP
       port: 8080
-      target : 8080
+      targetPort : 8080
   type: ClusterIP
