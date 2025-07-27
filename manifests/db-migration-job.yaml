@@ -12,7 +12,7 @@ spec:
   template:
     metadata:
       labels: 
-        name: db-migration
+        app: db-migration
     spec:
       containers:
         - name: migration
