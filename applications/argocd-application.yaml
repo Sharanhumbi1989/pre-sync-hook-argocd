@@ -6,9 +6,10 @@ metadata:
   labels:
     app: backend-app
 spec:
+  project: default
   source:
     repoURL: https://github.com/Sharanhumbi1989/pre-sync-hook-argocd.git
-    targerRevision: HEAD
+    targetRevision: HEAD
     path: manifests
   destination: 
     server: https://kubernetes.default.svc
