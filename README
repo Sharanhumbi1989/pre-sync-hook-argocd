@@ -1,0 +1,102 @@
+Assignment: Implement PreSync Hook in ArgoCD for Backend Deployment
+Objective
+The objective of this assignment is to ensure that a database migration process completes before deploying a backend application using ArgoCD PreSync hooks.
+
+You are required to: Implement a PreSync job that simulates a database schema upgrade.
+Deploy a backend application using a ReplicaSet.
+Expose the backend application via a Kubernetes Service.
+Ensure ArgoCD enforces the correct deployment order (PreSync → Backend → Service).
+
+Requirements
+Create a PreSync Job that runs before deploying the backend application.
+Ensure the backend application is deployed only after the migration job completes successfully.
+Expose the backend application using a ClusterIP Service.
+Use ArgoCD to manage and automate the entire deployment process.
+Use proper labels and selectors to connect the ReplicaSet and Service.
+Tasks
+Task 1: Create a PreSync Hook for Database Migration
+What You Need to Do:
+Define a Kubernetes Job that:
+Runs in the ArgoCD namespace (argocd).
+Uses a lightweight container image (e.g., alpine:latest or busybox:latest).
+Runs a simulated database migration process (e.g., sleep 5 to mimic a real operation).
+Uses PreSync annotations, ensuring it runs before the backend application.
+Labels and Annotations to Use:
+Annotations (Required for PreSync Execution in ArgoCD): yaml argocd.argoproj.io/hook: PreSync argocd.argoproj.io/hook-delete-policy: HookSucceeded
+Pod Labels (Optional, for better management): yaml labels: app: db-migration
+Important Considerations:
+The job should be automatically deleted after successful execution.
+If the job fails, the deployment should not proceed.
+Task 2: Deploy the Backend Application
+What You Need to Do:**
+Define a ReplicaSet that:
+Runs one or more pods for the backend application.
+Uses a default container image (e.g., nginx:latest or a backend API container).
+Waits until the PreSync job completes successfully before deployment.
+Ensures that it has proper labels to be discovered by the Service.
+Labels and Selectors to Use:**
+ReplicaSet Labels (Applied at Metadata Level) yaml labels: app: backend tier: backend
+Selector to Match Pods yaml selector: matchLabels: app: backend tier: backend
+Pod Labels (Inside Template) yaml template: metadata: labels: app: backend tier: backend
+Important Considerations:
+The backend should only start after the PreSync job has completed successfully.
+Proper labels and selectors must be defined to allow service discovery.
+
+Task 3: Expose the Backend Using a Kubernetes Service**
+What You Need to Do:**
+Define a ClusterIP Service that:
+Routes incoming requests to the backend ReplicaSet.
+Listens on port 8080 and forwards traffic to the backend pods.
+Selects pods based on matching labels.
+Labels and Selectors to Use:**
+Service Metadata Labels yaml labels: app: backend
+Selector to Match Backend Pods yaml selector: app: backend tier: backend
+Ports Definition ```yaml ports:
+protocol: TCP port: 8080 targetPort: 8080 ```
+Important Considerations:**
+Ensure the port and targetPort match the backend application’s container port.
+Only traffic within the cluster should be able to access the service.
+
+Task 4: Deploy and Sync the Application Using ArgoCD
+What You Need to Do:
+Define an ArgoCD Application manifest that:
+Uses a Git repository as the source of truth for all Kubernetes manifests.
+Specifies the correct directory structure inside the repository.
+Enables automatic sync, ensuring the application self-heals and prunes outdated resources.
+Make sure the ArgoCD Application is named nginx-app
+Labels and Selectors to Use:
+ArgoCD Application Labels yaml labels: app: backend-app
+Git Repository Configuration yaml repoURL: https://github.com/YOUR_USERNAME/argocd-app.git path: manifests targetRevision: HEAD
+ArgoCD Sync Policy ```yaml syncPolicy: automated: prune: true selfHeal: true syncOptions:
+CreateNamespace=true
+ApplyOutOfSyncOnly=true ```
+Important Considerations:
+Auto-sync and self-healing should be enabled in ArgoCD.
+** Ensure all manifests are stored in a Git repository that ArgoCD can access.
+** The namespace should be created automatically if it doesn’t already exist.
+
+Expected Directory Structure**
+Your GitHub repository should be structured as follows:
+
+argocd-app/
+├── manifests/
+│   ├── db-migration-job.yaml  # PreSync Hook Job
+│   ├── backend-replicaset.yaml  # Backend Application Deployment
+│   ├── backend-service.yaml  # Service to expose the backend
+├── applications/
+│   ├── argocd-application.yaml  # ArgoCD Application CRD
+├── README.md  # Documentation for the repo
+├── .gitignore  # Exclude unnecessary files
+Deployment Instructions
+Push the Manifests to GitHub
+Once all YAML files are created, push them to a GitHub repository.
+
+git init
+git remote add origin <gitea-url>
+git add .
+git commit -m "Initial commit: ArgoCD PreSync with backend service"
+git push -u origin main
+Apply the ArgoCD Application
+After pushing the manifests to GitHub, deploy the ArgoCD Application to track and sync your repository.
+
+kubectl apply -f applications/argocd-application.yaml
